@@ -4,11 +4,19 @@ import { useState } from "react";
 import { appAuth } from "../firebase/config";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
+// useAuthcontext import
+import { useAuthContext } from "./useAuthContext";
+
 export const useSignup = () => {
     // 에러 관리
     const [error, setError] = useState(null);
     // 현재 서버와의 통신 상태
     const [isPending, setIsPanding] = useState(false);
+
+    // useAuthContext hook을 사용해보자
+    // 새로운 데이터 추가
+    // useAuthContext를 통해 받아올 수 있는 값 2개 - state, dispatch 함수
+    const { dispatch } = useAuthContext();
 
     // email, password는 hook이 실행될 때 인자로 전달 / + 닉네임까지(유저 정보 업데이트시 사용)
     const signup = (email, password, displayName) => {
@@ -34,6 +42,7 @@ export const useSignup = () => {
                 // appAuth.currentUser - 현재 로그인한 유저의 정보 확인
                 updateProfile(appAuth.currentUser, { displayName })
                     .then(() => {
+                        dispatch({ type: 'login', payload: user });
                         setError(null);
                         setIsPanding(false); // 통신 종료
                     }).catch(err => {
