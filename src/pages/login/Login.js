@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import styles from './Login.module.css';
 
-export default function Login() {
+import { useLogin } from '../../hooks/useLogin';
 
+export default function Login() {
     // form 데이터관리 react hook - useState
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    // uselogin hook
+    const { error, isPending, login } = useLogin();
 
     // event - 이벤트 객체. 사용자가 실행한 이벤트에 관한 정보가 들어있는 객체
     const handleData = (event) => {
@@ -17,12 +21,13 @@ export default function Login() {
         }
     }
 
+    // 입력받는 데이터들 관리
     const handleSubmit = (event) => {
         // submit 기본이벤트 방지(페이지 리로딩)
         event.preventDefault();
 
-        // 개발자 도구에서 입력한 값 확인
-        console.log(email, password);
+        // login 함수
+        login(email, password);
     }
 
     return (
@@ -41,8 +46,14 @@ export default function Login() {
                 <label htmlFor="myPassWord">password : </label>
                 <input type="password" id="myPassWord" required onChange={handleData} value={password} />
 
-                {/* form 제출 버튼 - 명시적으로 type 적어주기 */}
-                <button type="submit" className={styles.btn}>로그인</button>
+                {/* 통신중이 아니라면 로그인버튼 노출 */}
+                {!isPending && <button type="submit" className={styles.btn}>로그인</button>}
+
+                {/* 통신중이라면 로그인 ing */}
+                {isPending && <strong>로그인 진행중입니다😎</strong>}
+
+                {/* 에러발생시 에러 정보 노출*/}
+                {error && <strong>{error}</strong>}
             </fieldset>
         </form>
 
