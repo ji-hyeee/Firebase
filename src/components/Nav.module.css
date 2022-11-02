@@ -14,12 +14,14 @@
     color: #fff;
 }
 
-.nav a {
+.nav a,
+strong {
     color: #fff;
     text-decoration: none;
 }
 
 .nav button {
+    margin-left: 20px;
     padding: 6px 12px;
     border-radius: 10px;
     background-color: yellow;

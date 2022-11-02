@@ -1,4 +1,7 @@
-import { createContext, useReducer } from "react";
+import { createContext, useEffect, useReducer } from "react";
+
+import { onAuthStateChanged } from "firebase/auth";
+import { appAuth } from "../firebase/config";
 
 // context 객체 생성
 const AuthContext = createContext();
@@ -18,6 +21,10 @@ const authReducer = (state, action) => {
         case 'logout':
             return { ...state, user: null }
 
+        // isAuthReady case 추가
+        case 'isAuthReady':
+            return { ...state, user: action.payload, isAuthReady: true }
+
         // 타입이 안 들어가있을 경우 기본값을 state로 정해준다
         default:
             return state
@@ -27,13 +34,44 @@ const authReducer = (state, action) => {
 // context를 구독할 컴포넌트의 묶음 범위를 설정
 // 매개변수로 children 객체를 받는다
 const AuthContextProvider = ({ children }) => {
-
     // user 정보 관리를 위한 useReduer hook
     // 첫번째 인자는 함수, 두번째 인자는 state의(관리할 유저 정보)초기값
     // 객체와 같이 복잡한 형태의 데이터를 다룰 때 reducer를 많이 사용한다
     const [state, dispatch] = useReducer(authReducer, {
-        user: null
+        user: null,
+
+        // 사용자 인증정보가 인증정보가 준비되어있는지 판단할 수 있는 변수
+        isAuthReady: false
+
+        // 새로운 기능 추가 - 리액트에서 사용자의 정보가 변경이 되는지 관찰하는 함수
+        // 만약에 변경이 됐을 경우 실행- 로그인, 로그아웃
+
+        // 리액트가 화면을 렌더링 하기 전에 재빠르게 파이어베이스와 통신해야하므로
+        // onAuthStateChanged 함수를 사용해보자
+        // Auth 객체의 관찰자를 설정
+        // 사용자가 로그인이 되었을 때 인증 정보를 받아오기 전까지 리액트 렌더링을 차단했다가
+        // 인증 정보를 받아오면 그때 렌더링이 되도록 기능을 구현하자
     })
+
+    // useEffect - 컴포넌트가 렌더링되고 그 후에 업데이트 될 때마다 실행되는 함수
+    useEffect(() => {
+        // 첫번째 인자 - 인증정보
+        // 두번째 인자 - user를 인자로 하는 콜백함수
+        // 이 함수는 user 정보를 계속 관찰해요 - 구독을 중지하기 전까지
+        const unSubscribe = onAuthStateChanged(appAuth, (user) => {
+            // 유저의 정보가 바뀜 - dispatch 함수 실행
+            // payload 는 유저 정보 전달
+            dispatch({ type: 'isAuthReady', payload: user })
+
+        })
+        // 시작할 때 한 번만 유저의 상태를 관찰하면 되므로 dispatch 함수 뒤에 실행해주기 - 구독 취소
+        // useEffect 의 경우 clean-up 개념이 있다
+        // 함수를 반환하면 정리가 필요한 때에 실행시킬 것이다 라고 적혀있다
+        // unSubscribe() 를 실행시키지말고 return 으로 전달해서 함수가 실행되게 만들자
+        return unSubscribe;
+
+        // useEffect 를 한 번만 실행해야하므로 두번째 인자에 [] 빈배열 적어주기
+    }, [])
 
     // state 가 제대로 관리되고 있는지 확인해보자
     console.log('user state:', state);
