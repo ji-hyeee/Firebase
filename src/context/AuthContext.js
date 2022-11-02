@@ -13,6 +13,11 @@ const authReducer = (state, action) => {
             // state 에 있던 기존 유저 정보에 action payload 로부터 받아온 새로운 유저 정보를 결합시킨다
             return { ...state, user: action.payload }
 
+
+        // logout case 추가 - user 정보는 null 로 없다 !
+        case 'logout':
+            return { ...state, user: null }
+
         // 타입이 안 들어가있을 경우 기본값을 state로 정해준다
         default:
             return state
