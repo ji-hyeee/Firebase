@@ -1,6 +1,6 @@
 import { useReducer } from "react";
-import { appFireStore } from "../firebase/config";
-import { addDoc, collection } from "firebase/firestore";
+import { appFireStore, timestamp } from "../firebase/config";
+import { collection, addDoc } from "firebase/firestore";
 
 // 우리가 받을 응답을 저장할 객체입니다. 객체이기 때문에 리듀서로 관리하겠습니다. 
 // 그리고 이전까지는 상태를 관리할 때 error나 isPending을 위한 useState을 따로 작성해왔지만 이번에는 useReducer로 한번에 관리해보겠습니다.
@@ -16,16 +16,22 @@ import { addDoc, collection } from "firebase/firestore";
 
 // 여러 데이터를 객체 형태로 관리한다
 const initState = {
-    document: null,
     isPending: false,
-    error: null,
-    success: false
+    document: null,
+    success: false,
+    error: null
 }
 
 // 전달 받는 action에 따른 state 업데이트를 위한 함수입니다.
 const storeReducer = (state, action) => {
     switch (action.type) {
-
+        case 'isPending':
+            return { isPending: true, document: null, success: false, error: null }
+        case 'addDoc':
+            // document 에는 addDoc함수를 통해서 payload에 docRef를 받아올 수 있었다
+            return { isPending: false, document: action.payload, success: true, error: null }
+        case 'error':
+            return { isPending: false, document: null, success: false, error: action.payload }
         default:
             return state
     }
@@ -59,8 +65,37 @@ export const useFirestore = (transaction) => {
     const colRef = collection(appFireStore, transaction);
 
     // 컬렉션에 문서를 추가합니다.
-    const addDocument = (doc) => {
+    // addDoc 함수를 사용하여 document를 추가할 수 있다
+    const addDocument = async (doc) => {
+        // addDocument가 실행되면 통신중이라는 걸 나타내기
+        dispatch({ type: "isPending" });
 
+        // docRef 는 통신기능을 담당하므로 try, catch로 안전하게 예외처리하기
+        try {
+            // 타임스탬프 추가
+            // 특정한 시간을 나타내거나 기록하는 문자열
+            // 데이터를 파이어스토어에 저장할 때 저장하는 시간도 타임스탬프를 통해서 같이 넘겨주자
+            // 시간을 저장하면 파이어스토어에 저장된 데이터를 시간 순서나 역순서로 정렬할 수 있다
+            // config.js 에서 설정하고 import 해오기
+
+            // fromDate 함수를 통해서 js 내장객체 new Date 를 실행
+            const createdTime = timestamp.fromDate(new Date())
+
+            // addDoc의 첫번째 인자로 collection의 참조
+            // 두번째 인자는 저장할 데이터 - addDocument가 실행될 때 전달받는 인자
+
+            // 시간 추가해주기 - doc을 전개구문으로 바꿔서 추가해주기
+            const docRef = await addDoc(colRef, { ...doc, createdTime });
+
+            // docRef가 document의 참조라고 했잖아여 어떤 데이터를 받아오는지 확인해봅시다
+            console.log(docRef)
+
+            // 성공적으로 통신이 끝났을 때 - 데이터를 무사히 받아온 것
+            dispatch({ type: "addDoc", payload: docRef });
+        } catch (error) {
+            // 에러 발생시
+            dispatch({ type: "error", payload: error.message });
+        }
     }
 
     // 컬렉션에서 문서를 제거합니다.
@@ -71,5 +106,5 @@ export const useFirestore = (transaction) => {
 
     // response - firestore를 통해서 전달받는 결과값
     return { addDocument, deleteDocument, response }
-
 }
+

@@ -1,7 +1,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, Timestamp } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,5 +18,6 @@ const app = initializeApp(firebaseConfig);
 // 인증 초기화
 const appAuth = getAuth();
 const appFireStore = getFirestore(app);
+const timestamp = Timestamp;
 
-export { appAuth, appFireStore }
+export { appAuth, appFireStore, timestamp }
