@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 import { appFireStore, timestamp } from "../firebase/config";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, deleteDoc, doc } from "firebase/firestore";
 
 // 우리가 받을 응답을 저장할 객체입니다. 객체이기 때문에 리듀서로 관리하겠습니다. 
 // 그리고 이전까지는 상태를 관리할 때 error나 isPending을 위한 useState을 따로 작성해왔지만 이번에는 useReducer로 한번에 관리해보겠습니다.
@@ -23,6 +23,7 @@ const initState = {
 }
 
 // 전달 받는 action에 따른 state 업데이트를 위한 함수입니다.
+// 전개구문을 안 쓰는 이유 - case 마다 데이터들이 다르다
 const storeReducer = (state, action) => {
     switch (action.type) {
         case 'isPending':
@@ -32,6 +33,8 @@ const storeReducer = (state, action) => {
             return { isPending: false, document: action.payload, success: true, error: null }
         case 'error':
             return { isPending: false, document: null, success: false, error: action.payload }
+        case 'deldteDoc':
+            return { isPending: false, document: action.payload, success: true, error: null }
         default:
             return state
     }
@@ -100,8 +103,17 @@ export const useFirestore = (transaction) => {
 
     // 컬렉션에서 문서를 제거합니다.
     // id 에는 나중에 삭제할 document의 id가 들어갈 것
-    const deleteDocument = (id) => {
+    const deleteDocument = async (id) => {
 
+        dispatch({ type: "isPending" });
+        try {
+            // doc - firestore method
+            // collection 레퍼런스 주소와 deleteDocument가 실행될 때 받아오는 id
+            const docRef = await deleteDoc(doc(colRef, id));
+            dispatch({ type: 'deleteDoc', payload: docRef });
+        } catch (e) {
+            dispatch({ type: 'error', payload: e.message });
+        }
     }
 
     // response - firestore를 통해서 전달받는 결과값

@@ -11,7 +11,8 @@ export default function Home() {
     const { user } = useAuthContext();
 
     // 도큐먼트 불러오기
-    const { documents, error } = useCollection('diary');
+    // 두번째 인자 추가 - 파이어스토어 쿼리 사용할거에여
+    const { documents, error } = useCollection('diary', ["uid", "==", user.uid]);
 
     return (
         <main className={styles.cont}>
