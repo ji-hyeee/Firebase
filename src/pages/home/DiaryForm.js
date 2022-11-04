@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFirestore } from "../../hooks/useFirestore";
 
 // 어디서 받아오나요? Home.js
@@ -19,6 +19,16 @@ export default function DiaryForm({ uid }) {
         }
     }
 
+    // 통신 후 좋은 사용자 경험을 위해서 폼에 작성된 내용을 삭제해보겠습니다
+    useEffect(() => {
+        // 통신이 성공했다면 빈문자열로 변경
+        if (response.success) {
+            setTitle('');
+            setText('');
+        }
+        // success 값이 바뀔 때만 작동되도록 
+    }, [response.success])
+
     const handleSubmit = (event) => {
         event.preventDefault();
         console.log(title, text)
@@ -34,10 +44,11 @@ export default function DiaryForm({ uid }) {
                     <legend>일기 쓰기</legend>
                     <label htmlFor="title">일기 제목 : </label>
                     {/* required - 필수 입력 요소 */}
-                    <input id="title" type="text" required onChange={handleData} />
+                    {/* 왜 초기화가 안됐나요? value 값으로 연결하지 않았어요 추가해줍시다 */}
+                    <input id="title" type="text" value={title} required onChange={handleData} />
 
                     <label htmlFor="text">일기 내용 : </label>
-                    <textarea id="text" type="text" required onChange={handleData}></textarea>
+                    <textarea id="text" type="text" value={text} required onChange={handleData}></textarea>
 
                     <button type="submit">저장하기</button>
                 </fieldset>
